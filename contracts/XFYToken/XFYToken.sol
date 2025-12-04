@@ -28,8 +28,10 @@ contract XFYToken is ERC20, AccessControl, ERC20Permit {
     constructor(
         address recipient,
         address defaultAdmin,
-        uint256 initialSupply
-    ) ERC20("XFY", "XFY") ERC20Permit("XFY") {
+        uint256 initialSupply,
+        string memory name_, 
+        string memory symbol_
+    ) ERC20(name_, symbol_) ERC20Permit(name_) {
         if (initialSupply > 0) {
             _mint(recipient, initialSupply * 10 ** decimals());
         }
