@@ -4,23 +4,35 @@ pragma solidity ^0.8.27;
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import {
+    ERC20Permit
+} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
+
 
 /// @custom:security-contact zane3412x@gmail.com
-contract XFY is ERC20, AccessControl, ERC20Permit {
+contract XFYToken is ERC20, AccessControl, ERC20Permit {
 
-    bytes32 public constant CCIP_MINT_BURN_ROLE = keccak256("CCIP_MINT_BURN_ROLE");
+    bytes32 public constant CCIP_MINT_BURN_ROLE =
+        keccak256("CCIP_ADMIN ");
 
     address CCIP_ADMIN;
 
-    event Minted(address indexed operator, address indexed to, uint256 amount);
-    event Burned(address indexed operator, address indexed from, uint256 amount);
+    // === 新增事件 ===
+    event AdminMint(address indexed caller, address indexed to, uint256 amount);
+    event AdminBurn(address indexed caller, address indexed from, uint256 amount);
 
-    constructor(address recipient, address defaultAdmin)
-        ERC20("XFY", "XFY")
-        ERC20Permit("XFY")
-    {
-        _mint(recipient, 1000000000 * 10 ** decimals());
+     // === CCIP 操作事件 ===
+    event CcipMint(address indexed operator, address indexed to, uint256 amount);
+    event CcipBurn(address indexed operator, address indexed from, uint256 amount);
+
+    constructor(
+        address recipient,
+        address defaultAdmin,
+        uint256 initialSupply
+    ) ERC20("XFY", "XFY") ERC20Permit("XFY") {
+        if (initialSupply > 0) {
+            _mint(recipient, initialSupply * 10 ** decimals());
+        }
         CCIP_ADMIN = defaultAdmin;
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
     }
@@ -29,14 +41,43 @@ contract XFY is ERC20, AccessControl, ERC20Permit {
         return CCIP_ADMIN;
     }
 
-    function mint(address to, uint256 amount) external onlyRole(CCIP_MINT_BURN_ROLE) { 
+    function adminMint(address to, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE){
         _mint(to, amount);
-        emit Minted(msg.sender, to, amount);
+        emit AdminMint(msg.sender, to, amount);
+    }
+
+    function adminBurn(address from, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE){
+        _burn(from, amount);
+        emit AdminBurn(msg.sender, from, amount);
+    }
+
+    function mint(address to, uint256 amount) external onlyRole(CCIP_MINT_BURN_ROLE){
+        _mint(to, amount);
+         emit CcipMint(msg.sender, to, amount);
     }
 
     function burn(address from, uint256 amount) external onlyRole(CCIP_MINT_BURN_ROLE){
         _burn(from, amount);
-        emit Burned(msg.sender, from, amount);
+        emit CcipBurn(msg.sender, from, amount);
+    }
+
+    function burn(uint256 amount) external onlyRole(CCIP_MINT_BURN_ROLE) {
+        _burn(msg.sender, amount);
+        emit CcipBurn(msg.sender, msg.sender, amount);
+    }
+
+    function burnFrom(
+        address from,
+        uint256 amount
+    ) external onlyRole(CCIP_MINT_BURN_ROLE) {
+        _spendAllowance(from, msg.sender, amount);
+        _burn(from, amount);
+        emit CcipBurn(msg.sender, from, amount);
+    }
+
+
+    function grantCcipRole(address account) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _grantRole(CCIP_MINT_BURN_ROLE, account);
     }
 
 }
