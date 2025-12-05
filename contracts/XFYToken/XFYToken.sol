@@ -43,16 +43,6 @@ contract XFYToken is ERC20, AccessControl, ERC20Permit {
         return CCIP_ADMIN;
     }
 
-    function adminMint(address to, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE){
-        _mint(to, amount);
-        emit AdminMint(msg.sender, to, amount);
-    }
-
-    function adminBurn(address from, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE){
-        _burn(from, amount);
-        emit AdminBurn(msg.sender, from, amount);
-    }
-
     function mint(address to, uint256 amount) external onlyRole(CCIP_MINT_BURN_ROLE){
         _mint(to, amount);
          emit CcipMint(msg.sender, to, amount);
