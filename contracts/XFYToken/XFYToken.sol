@@ -17,10 +17,6 @@ contract XFYToken is ERC20, AccessControl, ERC20Permit {
 
     address CCIP_ADMIN;
 
-    // === 新增事件 ===
-    event AdminMint(address indexed caller, address indexed to, uint256 amount);
-    event AdminBurn(address indexed caller, address indexed from, uint256 amount);
-
      // === CCIP 操作事件 ===
     event CcipMint(address indexed operator, address indexed to, uint256 amount);
     event CcipBurn(address indexed operator, address indexed from, uint256 amount);
