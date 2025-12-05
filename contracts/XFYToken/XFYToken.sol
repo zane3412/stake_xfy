@@ -13,7 +13,10 @@ import {
 contract XFYToken is ERC20, AccessControl, ERC20Permit {
 
     bytes32 public constant CCIP_MINT_BURN_ROLE =
-        keccak256("CCIP_ADMIN ");
+        keccak256("CCIP_ADMIN");
+    
+    bytes32 public constant REPURCHASE_ROLE =
+        keccak256("REPURCHASE_ROLE");
 
     address CCIP_ADMIN;
 
@@ -39,6 +42,10 @@ contract XFYToken is ERC20, AccessControl, ERC20Permit {
         return CCIP_ADMIN;
     }
 
+    function burn(uint256 amount) external onlyRole(CCIP_MINT_BURN_ROLE) onlyRole(REPURCHASE_ROLE) {
+        _burn(msg.sender, amount);
+    }
+
     function mint(address to, uint256 amount) external onlyRole(CCIP_MINT_BURN_ROLE){
         _mint(to, amount);
          emit CcipMint(msg.sender, to, amount);
@@ -47,11 +54,6 @@ contract XFYToken is ERC20, AccessControl, ERC20Permit {
     function burn(address from, uint256 amount) external onlyRole(CCIP_MINT_BURN_ROLE){
         _burn(from, amount);
         emit CcipBurn(msg.sender, from, amount);
-    }
-
-    function burn(uint256 amount) external onlyRole(CCIP_MINT_BURN_ROLE) {
-        _burn(msg.sender, amount);
-        emit CcipBurn(msg.sender, msg.sender, amount);
     }
 
     function burnFrom(
