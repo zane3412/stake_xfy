@@ -24,6 +24,8 @@ contract XFYToken is ERC20, AccessControl, ERC20Permit {
     event CcipMint(address indexed operator, address indexed to, uint256 amount);
     event CcipBurn(address indexed operator, address indexed from, uint256 amount);
 
+    event RepurchaseBurn(address indexed operator, address indexed from, uint256 amount);
+
     constructor(
         address recipient,
         address defaultAdmin,
@@ -42,8 +44,16 @@ contract XFYToken is ERC20, AccessControl, ERC20Permit {
         return CCIP_ADMIN;
     }
 
-    function burn(uint256 amount) external onlyRole(CCIP_MINT_BURN_ROLE) onlyRole(REPURCHASE_ROLE) {
+
+    function repurchaseBurn(uint256 amount) external onlyRole(REPURCHASE_ROLE){
         _burn(msg.sender, amount);
+        emit RepurchaseBurn(msg.sender, msg.sender, amount);
+    }
+
+
+    function burn(uint256 amount) external onlyRole(CCIP_MINT_BURN_ROLE) {
+        _burn(msg.sender, amount);
+        emit CcipBurn(msg.sender, msg.sender, amount);
     }
 
     function mint(address to, uint256 amount) external onlyRole(CCIP_MINT_BURN_ROLE){
