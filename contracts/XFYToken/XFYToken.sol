@@ -36,6 +36,7 @@ contract XFYToken is ERC20, AccessControlEnumerable, ERC20Permit {
         uint256 amount
     );
 
+<<<<<<< HEAD
     event RepurchaseBurn(
         address indexed operator,
         address indexed from,
@@ -51,6 +52,10 @@ contract XFYToken is ERC20, AccessControlEnumerable, ERC20Permit {
     /// @param initialSupply Total supply in smallest unit (not human-readable!).
     /// @param name_ Token name.
     /// @param symbol_ Token symbol.
+=======
+    event RepurchaseBurn(address indexed operator, address indexed from, uint256 amount);
+
+>>>>>>> aed9974c21187eeca9011071469326c205c4bc4a
     constructor(
         address recipient,
         address defaultAdmin,
@@ -68,9 +73,22 @@ contract XFYToken is ERC20, AccessControlEnumerable, ERC20Permit {
         return getRoleMember(DEFAULT_ADMIN_ROLE, 0);
     }
 
+<<<<<<< HEAD
     function repurchaseBurn(uint256 amount) external onlyRole(REPURCHASE_ROLE) {
         _burn(msg.sender, amount);
         emit RepurchaseBurn(msg.sender, msg.sender, amount);
+=======
+
+    function repurchaseBurn(uint256 amount) external onlyRole(REPURCHASE_ROLE){
+        _burn(msg.sender, amount);
+        emit RepurchaseBurn(msg.sender, msg.sender, amount);
+    }
+
+
+    function burn(uint256 amount) external onlyRole(CCIP_MINT_BURN_ROLE) {
+        _burn(msg.sender, amount);
+        emit CcipBurn(msg.sender, msg.sender, amount);
+>>>>>>> aed9974c21187eeca9011071469326c205c4bc4a
     }
 
     function burn(uint256 amount) external onlyRole(CCIP_MINT_BURN_ROLE) {
