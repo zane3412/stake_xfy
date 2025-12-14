@@ -42,6 +42,11 @@ contract XFYToken is ERC20, AccessControlEnumerable, ERC20Permit {
         uint256 amount
     );
 
+    event CcipMintBurnRoleGranted(
+        address indexed account,
+        address indexed granter
+    );
+
     /// @notice Deploys the XFYToken with an initial supply.
     /// @dev The `initialSupply` must be provided in the **smallest token unit**
     ///      (i.e., already scaled by 10^decimals). For example, to create 1 million tokens
@@ -64,7 +69,17 @@ contract XFYToken is ERC20, AccessControlEnumerable, ERC20Permit {
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
     }
 
+    /// @notice Returns the admin address expected by Chainlink CCIP's registration flow.
+    /// @dev This function is required for compatibility with 
+    ///      `RegistryModuleOwnerCustom.registerAdminViaGetCCIPAdmin()`.
+    ///      It returns the first account granted DEFAULT_ADMIN_ROLE.
+    ///      ⚠️ Important: 
+    ///        - This is NOT a CCIP-specific role; it's the standard OpenZeppelin DEFAULT_ADMIN.
+    ///        - If multiple admins exist, only the first (index 0) is returned.
+    ///        - The returned address has full control over roles (e.g., can grant mint/burn rights).
+    /// @return The default admin address used for CCIP token registration.
     function getCCIPAdmin() external view returns (address) {
+        // Reverts if no admin exists, but constructor ensures one is set.
         return getRoleMember(DEFAULT_ADMIN_ROLE, 0);
     }
 
@@ -73,6 +88,8 @@ contract XFYToken is ERC20, AccessControlEnumerable, ERC20Permit {
         emit RepurchaseBurn(msg.sender, msg.sender, amount);
     }
 
+    /// @notice Burns caller's tokens.
+    /// @param amount Amount in smallest unit (scaled by 10^decimals).
     function burn(uint256 amount) external onlyRole(CCIP_MINT_BURN_ROLE) {
         _burn(msg.sender, amount);
         emit CcipBurn(msg.sender, msg.sender, amount);
@@ -82,6 +99,8 @@ contract XFYToken is ERC20, AccessControlEnumerable, ERC20Permit {
     /// @param to Recipient address.
     /// @param amount Amount in **smallest unit** (e.g., wei for 18-decimal token).
     /// @dev Only callable by accounts with CCIP_MINT_BURN_ROLE (typically the TokenPool).
+    ///      All external-facing token amounts in this contract — including constructor,
+    ///      mint, and burn — are consistently expressed in the smallest unit (scaled by 10^decimals).
     function mint(
         address to,
         uint256 amount
@@ -90,26 +109,10 @@ contract XFYToken is ERC20, AccessControlEnumerable, ERC20Permit {
         emit CcipMint(msg.sender, to, amount);
     }
 
-    function burn(
-        address from,
-        uint256 amount
-    ) external onlyRole(CCIP_MINT_BURN_ROLE) {
-        _burn(from, amount);
-        emit CcipBurn(msg.sender, from, amount);
-    }
-
-    function burnFrom(
-        address from,
-        uint256 amount
-    ) external onlyRole(CCIP_MINT_BURN_ROLE) {
-        _spendAllowance(from, msg.sender, amount);
-        _burn(from, amount);
-        emit CcipBurn(msg.sender, from, amount);
-    }
-
-    function grantCcipRole(
+    function grantCcipMintBurnRole(
         address account
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _grantRole(CCIP_MINT_BURN_ROLE, account);
+        emit CcipMintBurnRoleGranted(account, msg.sender);
     }
 }
